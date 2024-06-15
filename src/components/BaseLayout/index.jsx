@@ -15,16 +15,16 @@ const BaseLayout = (props) => {
 
   return (
     <Layout
-      style={{ width: "100%", height: '100%' }}
+      style={{ width: "100vw", height: '100vh' }}
     >
       <Header>
         {header}
       </Header>
-      <Content>
+      <Content style={{ width: '90%', margin: "20px auto" }}>
         <div
           style={{
             background: colorBgContainer,
-            minHeight: 700,
+            height: '100%',
             padding: 24,
             borderRadius: borderRadiusLG,
           }}

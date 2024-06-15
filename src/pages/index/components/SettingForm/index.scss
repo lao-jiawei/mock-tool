@@ -1,0 +1,19 @@
+.setting-form {
+  width: 100%;
+  height: 67vh;
+  display: flex;
+  flex-direction: column;
+
+  .stepper {
+    flex: 1;
+  }
+
+  .content {
+    flex: 13;
+    background: red;
+  }
+
+  .footer {
+    flex: 1;
+  }
+}
