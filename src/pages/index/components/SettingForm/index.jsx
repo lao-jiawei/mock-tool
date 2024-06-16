@@ -1,6 +1,7 @@
 import { Steps } from 'antd';
 import React, { useState } from 'react';
 import FormFooter from './FormFooter';
+import StructureSetting from './StructureSetting';
 import './index.scss';
 
 const SettingForm = (props) => {
@@ -9,7 +10,7 @@ const SettingForm = (props) => {
   const stepSetting = [
     {
       title: '设置结构',
-      content: <></>,
+      content: <StructureSetting />,
       footerSetting: [
         {
           key: 'next',
