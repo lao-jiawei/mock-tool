@@ -1,5 +1,6 @@
+/* eslint-disable no-throw-literal */
 import { UndoOutlined } from '@ant-design/icons';
-import { Form, Input, Modal, Radio, Select, Tree } from 'antd';
+import { Form, Input, Modal, Radio, Select, Tree, message } from 'antd';
 import { deleteByPath } from 'jvtools';
 import _ from 'lodash';
 import { observable } from 'mobx';
@@ -12,6 +13,8 @@ import { commonMockData } from './stores/common-mock';
 
 const StructureSetting = (props) => {
   const { indexStore: store } = useStore();
+  const [messageApi, contextHolder] = message.useMessage();
+
   const [data, setData] = useState([
     {
       title: '/',
@@ -57,37 +60,19 @@ const StructureSetting = (props) => {
       label: '添加项',
       key: 'addItem',
       type: 'primary',
-      onClick: () => {
-        setModalProps({
-          open: true,
-          title: '添加项',
-          type: 'add',
-        })
-      }
+      onClick: () => { handleButtonOnClick('添加项', 'add'); }
     },
     {
       label: '编辑项',
       key: 'editItem',
       type: 'primary',
-      onClick: () => {
-        setModalProps({
-          open: true,
-          title: '编辑项',
-          type: 'edit',
-        })
-      }
+      onClick: () => { handleButtonOnClick('编辑项', 'edit'); }
     },
     {
       label: '删除项',
       key: 'deleteItem',
       danger: true,
-      onClick: () => {
-        setModalProps({
-          open: true,
-          title: '删除项',
-          type: 'delete',
-        })
-      }
+      onClick: () => { handleButtonOnClick('删除项', 'delete'); }
     }
   ]
 
@@ -257,8 +242,32 @@ const StructureSetting = (props) => {
     setModalProps({ open: false });
   }
 
+  function handleButtonOnClick(title, type) {
+    try {
+      if (_.isEmpty(formData?.pos)) {
+        throw ({
+          type: 'close',
+          message: '请点击选中节点',
+        })
+      }
+      setModalProps({
+        open: true,
+        title,
+        type,
+      })
+    } catch (error) {
+      messageApi.open({
+        type: 'error',
+        message: error?.message,
+      })
+      if (error?.type === 'close') setModalProps({ open: false });
+    }
+  }
+
+
   return (
     <>
+      {contextHolder}
       <div>
         <ButtonGroup
           buttonSettings={buttonSetting}
