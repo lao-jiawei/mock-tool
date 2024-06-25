@@ -1,10 +1,12 @@
 import { UndoOutlined } from '@ant-design/icons';
-import { Button, Form, Input, Modal, Radio, Select, Tree } from 'antd';
+import { Form, Input, Modal, Radio, Select, Tree } from 'antd';
+import { deleteByPath } from 'jvtools';
 import _ from 'lodash';
 import { observable } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { mock } from 'mockjs';
 import React, { useState } from 'react';
+import ButtonGroup from '../../../../components/ButtonGroup';
 import { useStore } from '../../../../hooks';
 import { commonMockData } from './stores/common-mock';
 
@@ -32,6 +34,7 @@ const StructureSetting = (props) => {
     modal: {
       open: false,
       title: '',
+      type: '',
     },
     radioGroup: {
       value: 'preset',
@@ -40,7 +43,6 @@ const StructureSetting = (props) => {
 
   const onTreeNodeSelect = (v, { node }) => {
     const { children: selectChildren, pos, key } = node;
-    console.log("🚀 ~ file: StructureSetting.jsx:42 ~ onTreeNodeSelect ~ node:", node);
     const children = _.cloneDeep(selectChildren);
     _.assign(formData, {
       children,
@@ -59,6 +61,7 @@ const StructureSetting = (props) => {
         setModalProps({
           open: true,
           title: '添加项',
+          type: 'add',
         })
       }
     },
@@ -70,6 +73,7 @@ const StructureSetting = (props) => {
         setModalProps({
           open: true,
           title: '编辑项',
+          type: 'edit',
         })
       }
     },
@@ -81,6 +85,7 @@ const StructureSetting = (props) => {
         setModalProps({
           open: true,
           title: '删除项',
+          type: 'delete',
         })
       }
     }
@@ -137,8 +142,8 @@ const StructureSetting = (props) => {
     formData.preViewValue = mockValue;
   }
 
-  function addItem() {
-    const curFormData = _.cloneDeep(formData);
+  function addItem(curFormData) {
+    console.log("🚀 ~ file: StructureSetting.jsx:145 ~ addItem ~ curFormData:", curFormData);
     const {
       pos,
       nodeKey,
@@ -150,19 +155,18 @@ const StructureSetting = (props) => {
     const curTreeData = _.cloneDeep(data);
     const tmp = findNode(curTreeData, levelIndex);
     const key = `${selectNodeKey}-${nodeKey}`;
-    insertNode(tmp,
-      {
-        title: nodeKey,
-        key,
-        mockValue: nodeValue,
-        children: [],
-      }
-    )
-    setModalProps({ open: false });
+
+    const nodeData = {
+      title: nodeKey,
+      mockValue: nodeValue,
+      key,
+      children: [],
+    }
+    insertNode(tmp, nodeData);
+
     setData(() => curTreeData);
     const path = key.split('-').filter((e) => e !== 'root');
     _.set(mockData, path, nodeValue);
-
     store.treeData = mockData;
   }
 
@@ -180,20 +184,65 @@ const StructureSetting = (props) => {
     parent.children.push(node);
   }
 
+  function editNode(curFormData) {
+    const {
+      pos,
+      nodeKey,
+      nodeValue,
+      selectNodeKey,
+    } = curFormData;
+    const levelIndex = pos.split('-');
+    levelIndex.shift();
+    levelIndex.shift();
+    const curTreeData = _.cloneDeep(data);
+    const tmp = findNode(curTreeData, levelIndex);
+    console.log("🚀 ~ file: StructureSetting.jsx:198 ~ editNode ~ tmp:", tmp);
+    const len = tmp?.children.length;
+
+    for (let i = 0; i < len; i++) {
+      const curNode = tmp?.children[i];
+      if (curNode.key === selectNodeKey) {
+        const newKeyArr = selectNodeKey.split('-');
+        const oldPath = newKeyArr.filter((e) => e !== 'root');
+        deleteByPath(mockData,oldPath);
+        newKeyArr.pop();
+        newKeyArr.push(nodeKey)
+        const key = newKeyArr.join('-');
+        _.assign(curNode, {
+          title: nodeKey,
+          mockValue: nodeValue,
+          key,
+        });
+        tmp.children[i] = curNode;
+        const path = key.split('-').filter((e) => e !== 'root');
+        _.set(mockData, path, nodeValue);
+      }
+    }
+
+    setData(() => curTreeData);
+    store.treeData = mockData;
+  }
+
+  function handleOk() {
+    const curFormData = _.cloneDeep(formData);
+    const model = componentProps?.modal?.type;
+    const funMap = {
+      'add': addItem,
+      'edit': editNode,
+      'delete': () => { },
+    }
+    funMap[model](curFormData);
+    setModalProps({ open: false });
+  }
+
 
 
   return (
     <>
       <div>
-        <div>
-          {buttonSetting.map(({ label, key, ...buttonProps }) => (
-            <Button
-              key={key}
-              style={{ margin: '5px' }}
-              {...buttonProps}
-            >{label}</Button>
-          ))}
-        </div>
+        <ButtonGroup
+          buttonSettings={buttonSetting}
+        />
         <div>
           <Tree
             showLine
@@ -205,7 +254,7 @@ const StructureSetting = (props) => {
       <Modal
         {...componentProps?.modal}
         cancelText='取消'
-        onOk={addItem}
+        onOk={handleOk}
         onCancel={() => { setModalProps({ open: false }) }}
         onClose={() => { setModalProps({ open: false }) }}
       >

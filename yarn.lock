@@ -6891,6 +6891,11 @@ jsonpointer@^5.0.0:
     object.assign "^4.1.4"
     object.values "^1.1.6"
 
+jvtools@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.npmjs.org/jvtools/-/jvtools-1.0.5.tgz#581bbeb8b2f95d373f4cbdf45825312674d56aba"
+  integrity sha512-NCmraAE1pImK2n1QMTKOc+4rjIcu07/RU7umneRgWIwhdfbyPKdNKC3lAMDVnSdc9/Rq7fNqGxIHhts7HHH81A==
+
 keyv@^4.5.3:
   version "4.5.4"
   resolved "https://registry.npmjs.org/keyv/-/keyv-4.5.4.tgz#a879a99e29452f942439f2a405e3af8b31d4de93"
