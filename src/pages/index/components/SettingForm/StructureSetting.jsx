@@ -132,6 +132,8 @@ const StructureSetting = (props) => {
     )
   }
 
+  const isFormDom = ['add', 'edit'].includes(componentProps?.modal?.type);
+
   function onMockValueChange(v) {
     formData.nodeValue = v;
     loadMockValue(v);
@@ -143,7 +145,6 @@ const StructureSetting = (props) => {
   }
 
   function addItem(curFormData) {
-    console.log("🚀 ~ file: StructureSetting.jsx:145 ~ addItem ~ curFormData:", curFormData);
     const {
       pos,
       nodeKey,
@@ -196,7 +197,6 @@ const StructureSetting = (props) => {
     levelIndex.shift();
     const curTreeData = _.cloneDeep(data);
     const tmp = findNode(curTreeData, levelIndex);
-    console.log("🚀 ~ file: StructureSetting.jsx:198 ~ editNode ~ tmp:", tmp);
     const len = tmp?.children.length;
 
     for (let i = 0; i < len; i++) {
@@ -204,7 +204,7 @@ const StructureSetting = (props) => {
       if (curNode.key === selectNodeKey) {
         const newKeyArr = selectNodeKey.split('-');
         const oldPath = newKeyArr.filter((e) => e !== 'root');
-        deleteByPath(mockData,oldPath);
+        deleteByPath(mockData, oldPath);
         newKeyArr.pop();
         newKeyArr.push(nodeKey)
         const key = newKeyArr.join('-');
@@ -223,19 +223,39 @@ const StructureSetting = (props) => {
     store.treeData = mockData;
   }
 
+  function deleteNode(curFormData) {
+    const {
+      pos,
+      selectNodeKey,
+    } = curFormData;
+    const levelIndex = pos.split('-');
+    levelIndex.shift();
+    levelIndex.shift();
+    const curTreeData = _.cloneDeep(data);
+    const tmp = findNode(curTreeData, levelIndex);
+
+    const newChildren = tmp.children.filter(({ key }) => key !== selectNodeKey);
+    _.assign(tmp, {
+      children: newChildren,
+    });
+    const path = selectNodeKey.split('-').filter((e) => e !== 'root');
+    deleteByPath(mockData, path);
+
+    setData(() => curTreeData);
+    store.treeData = mockData;
+  }
+
   function handleOk() {
     const curFormData = _.cloneDeep(formData);
     const model = componentProps?.modal?.type;
     const funMap = {
       'add': addItem,
       'edit': editNode,
-      'delete': () => { },
+      'delete': deleteNode,
     }
     funMap[model](curFormData);
     setModalProps({ open: false });
   }
-
-
 
   return (
     <>
@@ -258,57 +278,64 @@ const StructureSetting = (props) => {
         onCancel={() => { setModalProps({ open: false }) }}
         onClose={() => { setModalProps({ open: false }) }}
       >
-        <Form
-          initialValues={formData}
-        >
-          <Form.Item
-            label='父项'
-            name="selectNode"
+        {isFormDom ? <>
+          <Form
+            initialValues={formData}
           >
-            <Input disabled />
-          </Form.Item>
-          <Form.Item
-            label='键名'
-            name="nodeKey"
-          >
-            <Input
-              onChange={({ target }) => {
-                const { value } = target;
-                formData.nodeKey = value;
-              }}
-            />
-          </Form.Item>
-          <div style={{ margin: '20px' }}>
-            <Radio.Group
-              {...componentProps?.radioGroup}
-              options={radioOptions}
-              optionType="button"
-              buttonStyle="solid"
-              onChange={({ target }) => {
-                const { value: newValue } = target;
-                setRadioGroupProps({ value: newValue })
-              }}
-            />
-          </div>
-          <Form.Item
-            label='键值'
-            name="nodeValue"
-            onChange={({ target }) => onMockValueChange(target?.value)}
-          >
-            {NodeValueDom[componentProps?.radioGroup?.value]}
-          </Form.Item>
-          <Form.Item
-            label='预览生成值'
-          >
-            <Input
-              disabled value={formData?.preViewValue}
-              addonAfter={<UndoOutlined
-                onClick={() => loadMockValue(formData?.nodeValue)}
+            <Form.Item
+              label='父项'
+              name="selectNode"
+            >
+              <Input disabled />
+            </Form.Item>
+            <Form.Item
+              label='键名'
+              name="nodeKey"
+            >
+              <Input
+                onChange={({ target }) => {
+                  const { value } = target;
+                  formData.nodeKey = value;
+                }}
               />
-              }
-            />
-          </Form.Item>
-        </Form>
+            </Form.Item>
+            <div style={{ margin: '20px' }}>
+              <Radio.Group
+                {...componentProps?.radioGroup}
+                options={radioOptions}
+                optionType="button"
+                buttonStyle="solid"
+                onChange={({ target }) => {
+                  const { value: newValue } = target;
+                  setRadioGroupProps({ value: newValue })
+                }}
+              />
+            </div>
+            <Form.Item
+              label='键值'
+              name="nodeValue"
+              onChange={({ target }) => onMockValueChange(target?.value)}
+            >
+              {NodeValueDom[componentProps?.radioGroup?.value]}
+            </Form.Item>
+            <Form.Item
+              label='预览生成值'
+            >
+              <Input
+                disabled value={formData?.preViewValue}
+                addonAfter={<UndoOutlined
+                  onClick={() => loadMockValue(formData?.nodeValue)}
+                />
+                }
+              />
+            </Form.Item>
+          </Form>
+        </> : <>
+          <div>
+            {`确定删除${formData?.selectNodeKey.split('-').join('>')}项设置`}
+          </div>
+        </>
+        }
       </Modal >
     </>
   )
