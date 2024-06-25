@@ -7,7 +7,7 @@ const ButtonGroup = (props) => {
   } = props;
   return (
     <div>
-      {buttonSettings.map(({ label, key, ...buttonProps }) => (
+      {buttonSettings.filter(({ show = true }) => show).map(({ label, key, ...buttonProps }) => (
         <Button
           key={key}
           style={{ margin: '5px' }}
