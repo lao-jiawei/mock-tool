@@ -5,34 +5,28 @@ import { observable } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { mock } from 'mockjs';
 import React, { useState } from 'react';
+import { useStore } from '../../../../hooks';
 import { commonMockData } from './stores/common-mock';
 
 const StructureSetting = (props) => {
+  const { indexStore: store } = useStore();
   const [data, setData] = useState([
     {
       title: '/',
       key: 'root',
-      children: [
-        {
-          title: 'level1',
-          key: 'level1',
-          children: [
-            {
-              title: 'level2',
-              key: 'level2',
-            }
-          ]
-        }
-      ]
+      children: []
     }
   ]);
   const [formData] = useState(() => observable({
     selectNode: 'root',
+    selectNodeKey: 'root',
     preViewValue: '',
     nodeKey: '',
     children: [],
     pos: '',
   }));
+
+  const [mockData] = useState(() => observable({}))
 
   const [componentProps, setComponentProps] = useState({
     modal: {
@@ -45,12 +39,14 @@ const StructureSetting = (props) => {
   })
 
   const onTreeNodeSelect = (v, { node }) => {
-    const { children: selectChildren, pos } = node;
+    const { children: selectChildren, pos, key } = node;
+    console.log("🚀 ~ file: StructureSetting.jsx:42 ~ onTreeNodeSelect ~ node:", node);
     const children = _.cloneDeep(selectChildren);
     _.assign(formData, {
       children,
       pos,
       selectNode: v,
+      selectNodeKey: key,
     })
   }
 
@@ -144,33 +140,39 @@ const StructureSetting = (props) => {
   function addItem() {
     const curFormData = _.cloneDeep(formData);
     const {
-      selectNode,
       pos,
+      nodeKey,
+      nodeValue,
+      selectNodeKey,
     } = curFormData;
     const levelIndex = pos.split('-');
-    const layer = levelIndex.length;
+    levelIndex.shift();
     const curTreeData = _.cloneDeep(data);
+    const tmp = findNode(curTreeData, levelIndex);
+    const key = `${selectNodeKey}-${nodeKey}`;
+    insertNode(tmp,
+      {
+        title: nodeKey,
+        key,
+        mockValue: nodeValue,
+        children: [],
+      }
+    )
+    setModalProps({ open: false });
+    setData(() => curTreeData);
+    const path = key.split('-').filter((e) => e !== 'root');
+    _.set(mockData, path, nodeValue);
 
-
-
-    console.log("🚀 ~ file: StructureSetting.jsx:151 ~ addItem ~ levelIndex:", levelIndex);
-    console.log("🚀 ~ file: StructureSetting.jsx:148 ~ addItem ~ curFormData:", curFormData);
-    console.log("🚀 ~ file: StructureSetting.jsx:151 ~ addItem ~ curTreeData:", curTreeData);
+    store.treeData = mockData;
   }
 
   // 递归查找目标父节点
-  function findNode(tree, name) {
-    if (tree.name === name) {
-      return tree;
-    } else {
-      for (const child of tree.children) {
-        const found = findNode(child, name);
-        if (found) {
-          return found;
-        }
-      }
-    }
-    return null;
+  function findNode(tree, indexArr) {
+    const index = indexArr.shift();
+    if (!indexArr.length) return tree[index];
+    const curChildren = tree[index]?.children;
+    const res = findNode(curChildren, indexArr);
+    return res;
   }
 
   // 插入节点
