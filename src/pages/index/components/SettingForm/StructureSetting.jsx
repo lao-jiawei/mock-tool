@@ -9,6 +9,7 @@ import { mock } from 'mockjs';
 import React, { useState } from 'react';
 import ButtonGroup from '../../../../components/ButtonGroup';
 import { useStore } from '../../../../hooks';
+import { strIsReg } from '../../../../utils/utils';
 import { commonMockData } from './stores/common-mock';
 
 const StructureSetting = (props) => {
@@ -125,7 +126,11 @@ const StructureSetting = (props) => {
   }
 
   function loadMockValue(nodeValue) {
-    const mockValue = mock(nodeValue);
+    let curNodeValue = nodeValue;
+    if (strIsReg(nodeValue)) {
+      curNodeValue = eval(nodeValue);
+    }
+    const mockValue = mock(curNodeValue);
     formData.preViewValue = mockValue;
   }
 
@@ -152,7 +157,7 @@ const StructureSetting = (props) => {
 
     setData(() => curTreeData);
     const path = key.split('-').filter((e) => e !== 'root');
-    _.set(mockData, path, nodeValue);
+    _.set(mockData, path, eval(nodeValue));
     store.treeData = mockData;
   }
 
